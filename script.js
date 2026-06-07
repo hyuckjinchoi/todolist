@@ -11,6 +11,8 @@ const todoForm = document.querySelector("#todoForm");
 const itemInput = document.querySelector("#itemInput");
 const dueInput = document.querySelector("#dueInput");
 const descriptionInput = document.querySelector("#descriptionInput");
+const submitTodoButton = document.querySelector("#submitTodoButton");
+const cancelEditButton = document.querySelector("#cancelEditButton");
 const todoList = document.querySelector("#todoList");
 const todoCount = document.querySelector("#todoCount");
 const emptyState = document.querySelector("#emptyState");
@@ -21,6 +23,7 @@ const syncStatus = document.querySelector("#syncStatus");
 let todos = [];
 let sessionPassword = sessionStorage.getItem(SESSION_PASSWORD_KEY) || "";
 let isBusy = false;
+let editingTodoId = "";
 
 function todayString() {
   const now = new Date();
@@ -82,6 +85,7 @@ function setBusy(busy) {
     descriptionInput,
     lockButton,
     clearDoneButton,
+    cancelEditButton,
     ...document.querySelectorAll("button[type='submit']"),
     ...document.querySelectorAll("[data-action]"),
   ];
@@ -155,6 +159,24 @@ function applyTodos(response) {
   renderTodos();
 }
 
+function setEditMode(todo) {
+  editingTodoId = todo.id;
+  itemInput.value = todo.item || "";
+  dueInput.value = todo.dueDate || "";
+  descriptionInput.value = todo.description || "";
+  submitTodoButton.textContent = "저장";
+  cancelEditButton.classList.remove("hidden");
+  setStatus("수정할 내용을 입력한 뒤 저장하세요.");
+  itemInput.focus();
+}
+
+function clearEditMode() {
+  editingTodoId = "";
+  todoForm.reset();
+  submitTodoButton.textContent = "추가";
+  cancelEditButton.classList.add("hidden");
+}
+
 function renderTodos() {
   const visibleTodos = sortedTodos();
   todoList.innerHTML = visibleTodos
@@ -182,9 +204,14 @@ function renderTodos() {
           </td>
           <td class="date-text ${dueClass(todo.dueDate)}">${dueText}</td>
           <td>
-            <button class="delete-button" type="button" data-action="delete" data-id="${escapeHtml(todo.id)}">
-              삭제
-            </button>
+            <div class="row-actions">
+              <button class="edit-button" type="button" data-action="edit" data-id="${escapeHtml(todo.id)}">
+                수정
+              </button>
+              <button class="delete-button" type="button" data-action="delete" data-id="${escapeHtml(todo.id)}">
+                삭제
+              </button>
+            </div>
           </td>
         </tr>
       `;
@@ -226,6 +253,7 @@ function lock() {
   sessionPassword = "";
   todos = [];
   sessionStorage.removeItem(SESSION_PASSWORD_KEY);
+  clearEditMode();
   todoApp.classList.add("hidden");
   authPanel.classList.remove("hidden");
   renderTodos();
@@ -248,19 +276,22 @@ todoForm.addEventListener("submit", async (event) => {
   }
 
   setBusy(true);
-  setStatus("항목을 저장하는 중입니다.");
+  setStatus(editingTodoId ? "수정 내용을 저장하는 중입니다." : "항목을 저장하는 중입니다.");
 
   try {
-    const response = await requestApi("add", {
+    const payload = {
       password: sessionPassword,
-      createdAt: todayString(),
       item,
       dueDate: dueInput.value,
       description: descriptionInput.value.trim(),
-    });
+    };
+    const wasEditing = Boolean(editingTodoId);
+    const response = wasEditing
+      ? await requestApi("update", { ...payload, id: editingTodoId })
+      : await requestApi("add", { ...payload, createdAt: todayString() });
     applyTodos(response);
-    todoForm.reset();
-    setStatus("저장되었습니다.", "success");
+    clearEditMode();
+    setStatus(wasEditing ? "수정되었습니다." : "저장되었습니다.", "success");
     itemInput.focus();
   } catch (error) {
     setStatus(error.message, "error");
@@ -276,6 +307,12 @@ todoList.addEventListener("click", async (event) => {
 
   if (!action || !id || isBusy) return;
 
+  if (action === "edit") {
+    const todo = todos.find((item) => item.id === id);
+    if (todo) setEditMode(todo);
+    return;
+  }
+
   setBusy(true);
   setStatus("변경 내용을 저장하는 중입니다.");
 
@@ -283,6 +320,7 @@ todoList.addEventListener("click", async (event) => {
     if (action === "delete") {
       const response = await requestApi("delete", { password: sessionPassword, id });
       applyTodos(response);
+      if (editingTodoId === id) clearEditMode();
     }
 
     if (action === "toggle") {
@@ -318,6 +356,12 @@ clearDoneButton.addEventListener("click", async () => {
   } finally {
     setBusy(false);
   }
+});
+
+cancelEditButton.addEventListener("click", () => {
+  clearEditMode();
+  setStatus("수정을 취소했습니다.");
+  itemInput.focus();
 });
 
 lockButton.addEventListener("click", lock);
