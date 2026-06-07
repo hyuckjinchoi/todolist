@@ -161,8 +161,10 @@ textarea:focus {
 
 .auth-form button,
 .primary-button,
+.secondary-button,
 .ghost-button,
 .text-button,
+.edit-button,
 .delete-button {
   min-height: 44px;
   border: 0;
@@ -237,10 +239,22 @@ textarea:focus {
 }
 
 .primary-button {
-  grid-column: 3;
-  grid-row: 1 / 3;
   min-width: 96px;
   height: 100%;
+}
+
+.form-actions {
+  display: grid;
+  grid-column: 3;
+  grid-row: 1 / 3;
+  gap: 10px;
+  height: 100%;
+}
+
+.secondary-button {
+  padding: 0 16px;
+  background: #e7ece8;
+  color: #334139;
 }
 
 .list-tools {
@@ -341,8 +355,23 @@ tbody tr:last-child td {
   font-weight: 900;
 }
 
+.row-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.edit-button,
 .delete-button {
   padding: 0 12px;
+}
+
+.edit-button {
+  background: var(--surface-strong);
+  color: var(--accent-strong);
+}
+
+.delete-button {
   background: #f7e8e8;
   color: var(--danger);
 }
@@ -391,12 +420,17 @@ tbody tr:last-child td {
   }
 
   .description-field,
-  .primary-button {
+  .form-actions {
     grid-column: auto;
     grid-row: auto;
   }
 
-  .primary-button {
+  .form-actions {
+    height: auto;
+  }
+
+  .primary-button,
+  .secondary-button {
     height: 48px;
   }
 }
