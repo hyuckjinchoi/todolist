@@ -1,5 +1,5 @@
 const APPS_SCRIPT_URL =
-  "https://script.google.com/macros/s/AKfycby9gpdO-SPNsh1x7l46gTGrbbNmr9ST88JA7nvYmzlsBdIQgqKuj9GMBSQXHCCePayF/exec";
+  "https://script.google.com/macros/s/AKfycbxHfGJGitmfMDMlSbGw2nJh_HcjscxaZeyNieI-EpmUSI3DW7ia7XWpZgvrBnShm9c/exec";
 const SESSION_PASSWORD_KEY = "personal-todo-session-password";
 
 const authPanel = document.querySelector("#authPanel");
