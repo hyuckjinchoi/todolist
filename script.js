@@ -147,6 +147,10 @@ function requestApi(action, payload = {}) {
 
 async function loadTodos() {
   const response = await requestApi("list", { password: sessionPassword });
+  applyTodos(response);
+}
+
+function applyTodos(response) {
   todos = Array.isArray(response.todos) ? response.todos : [];
   renderTodos();
 }
@@ -247,14 +251,14 @@ todoForm.addEventListener("submit", async (event) => {
   setStatus("항목을 저장하는 중입니다.");
 
   try {
-    await requestApi("add", {
+    const response = await requestApi("add", {
       password: sessionPassword,
       createdAt: todayString(),
       item,
       dueDate: dueInput.value,
       description: descriptionInput.value.trim(),
     });
-    await loadTodos();
+    applyTodos(response);
     todoForm.reset();
     setStatus("저장되었습니다.", "success");
     itemInput.focus();
@@ -277,18 +281,19 @@ todoList.addEventListener("click", async (event) => {
 
   try {
     if (action === "delete") {
-      await requestApi("delete", { password: sessionPassword, id });
+      const response = await requestApi("delete", { password: sessionPassword, id });
+      applyTodos(response);
     }
 
     if (action === "toggle") {
-      await requestApi("update", {
+      const response = await requestApi("update", {
         password: sessionPassword,
         id,
         done: target.checked ? "true" : "false",
       });
+      applyTodos(response);
     }
 
-    await loadTodos();
     setStatus("변경되었습니다.", "success");
   } catch (error) {
     target.checked = !target.checked;
@@ -305,8 +310,8 @@ clearDoneButton.addEventListener("click", async () => {
   setStatus("완료 항목을 삭제하는 중입니다.");
 
   try {
-    await requestApi("clearDone", { password: sessionPassword });
-    await loadTodos();
+    const response = await requestApi("clearDone", { password: sessionPassword });
+    applyTodos(response);
     setStatus("완료 항목을 삭제했습니다.", "success");
   } catch (error) {
     setStatus(error.message, "error");
